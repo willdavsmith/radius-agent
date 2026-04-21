@@ -53,23 +53,9 @@ Fork this document into your own repository and adapt the marked sections
 - Application changes go through pull request review.
 - Production deployments require at least one approval.
 - Resource types are a **closed set** (see §5). Inventing types or
-  properties is forbidden — AI-generated Bicep that does so must be
-  rejected in review.
+  properties is forbidden.
 - Recipe registrations should be pinned to a specific commit SHA, not a
   branch.
-
-### Hard Prohibitions
-
-- Do NOT use `Radius.Core/applications` — it does not exist; use
-  `Applications.Core/applications`.
-- Do NOT set or reference `readOnly` properties.
-- Do NOT use array syntax where the schema specifies object maps.
-- Do NOT place `connections` inside `containers` — `connections` is a
-  top-level property of `properties`.
-- Do NOT use a bare runtime base image when a `Dockerfile` exists — model
-  the build with `Radius.Compute/containerImages`.
-- Do NOT pass registry credentials as Bicep parameters or store them in
-  application Bicep.
 
 ## 5. Infrastructure as Code
 
@@ -77,17 +63,17 @@ Fork this document into your own repository and adapt the marked sections
 
 | Tool      | Status   | Use Case                                            |
 | --------- | -------- | --------------------------------------------------- |
-| Bicep     | Approved | Radius application definitions (`app.bicep`)        |
-| Terraform | Approved | Recipe implementations (preferred for Kubernetes — Terraform recipes have built-in health monitoring; Bicep recipes return immediately) |
+| Bicep     | Approved | Radius application definitions (`app.bicep`) and recipe implementations       |
+| Terraform | Approved | Recipe implementations |
 | `rad` CLI | Approved | Build, deploy, and manage Radius resources          |
 
 ### Approved Resource Types
 
-#### Built-in (namespace `Applications.Core`, extension `radius`)
+#### Built-in (namespace `Radius.Core`, extension `radius`)
 
 | Need                 | Resource Type                       | API Version          |
 | -------------------- | ----------------------------------- | -------------------- |
-| Application grouping | `Applications.Core/applications`    | `2023-10-01-preview` |
+| Application grouping | `Radius.Core/applications`    | `2025-08-01-preview` |
 
 #### Extensible types (API `2025-08-01-preview`)
 
@@ -109,7 +95,7 @@ schema MUST NOT be set.
 
 | Namespace            | Extension name    |
 | -------------------- | ----------------- |
-| `Applications.Core`  | `radius`          |
+| `Radius.Core`  | `radius`          |
 | `Radius.Compute`     | `radiusCompute`   |
 | `Radius.Data`        | `radiusData`      |
 | `Radius.Security`    | `radiusSecurity`  |
@@ -131,7 +117,7 @@ Every `app.bicep` MUST follow this structure, in this order:
    - `param environment string` (always; injected by the `rad` CLI)
    - `@secure() param` for any secret value (e.g. database passwords)
    - `param image string` for any container image built from source
-3. **Application** — exactly one `Applications.Core/applications@2023-10-01-preview`.
+3. **Application** — exactly one `Radius.Core/applications@2025-08-01-preview`.
 4. **Data / infrastructure** — databases, caches, volumes.
 5. **Secrets** — `Radius.Security/secrets` for credentials.
 6. **Container images** — `Radius.Compute/containerImages` for builds.
@@ -141,11 +127,9 @@ Every `app.bicep` MUST follow this structure, in this order:
 
 Structural invariants:
 
-- Exactly **one** `Applications.Core/applications` resource per file.
+- Exactly **one** `Radius.Core/applications` resource per file.
 - One `Radius.Compute/containers` resource per service.
 - One `Radius.Data/*` resource per backing data store.
-- `connections` is a **top-level** property under `properties` and is an
-  **object map** (NOT an array).
 - Container ports use `containerPort` (NOT `port`).
 - Validate every file with `rad bicep build app.bicep` before deployment.
 
@@ -251,7 +235,7 @@ var names.
   declarations — never hardcoded in Bicep.
 - Applications must never embed secrets in code, config files, or container
   images.
-- Rotate secrets on a regular cadence (90 days recommended).
+- Rotate secrets on a regular cadence.
 
 ### Registry Credentials (Platform-Owned)
 
@@ -284,7 +268,7 @@ var names.
 Before any `app.bicep` is committed or deployed, verify ALL of the
 following:
 
-- [ ] Application resource uses `Applications.Core/applications@2023-10-01-preview`.
+- [ ] Application resource uses `Radius.Core/applications@2025-08-01-preview`.
 - [ ] Every `Radius.*` type is in the approved list (§5) and uses API version `2025-08-01-preview`.
 - [ ] Properties on each resource exist in that resource type's schema.
 - [ ] Extensions appear in the order: `radius`, `radiusCompute`, `radiusSecurity`, `radiusData`.
@@ -292,7 +276,7 @@ following:
 - [ ] `param environment string` is declared.
 - [ ] `@secure() param` is used for every sensitive value.
 - [ ] `param image string` is declared if container images are built from source.
-- [ ] Exactly one `Applications.Core/applications` resource.
+- [ ] Exactly one `Radius.Core/applications` resource.
 - [ ] Database resources reference a `Radius.Security/secrets` via `secretName`.
 - [ ] `connections` is a top-level property under `properties` (not inside `containers`) and is an object map.
 - [ ] Container ports use `containerPort`.
