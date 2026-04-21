@@ -1,0 +1,59 @@
+{
+  "name": "@willdavsmith/radius-mcp-server",
+  "version": "0.1.1",
+  "description": "MCP server that helps AI agents generate Radius application definitions from source repositories.",
+  "license": "Apache-2.0",
+  "author": "Radius Project",
+  "homepage": "https://github.com/willdavsmith/radius-agent/tree/main/mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willdavsmith/radius-agent.git",
+    "directory": "mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/willdavsmith/radius-agent/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "radius",
+    "radapp",
+    "bicep",
+    "copilot",
+    "github-copilot"
+  ],
+  "type": "module",
+  "bin": {
+    "radius-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "constitution.md",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "sync-constitution": "node -e \"const fs=require('fs'),p=require('path');const src=p.resolve(__dirname,'..','radius-platform-constitution.md');if(fs.existsSync(src))fs.copyFileSync(src,p.resolve(__dirname,'constitution.md'));\"",
+    "prebuild": "npm run sync-constitution",
+    "build": "tsc && chmod +x dist/cli.js",
+    "start": "node dist/cli.js",
+    "prepare": "npm run build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,41 +1,59 @@
 # Radius Agent
 
-A [GitHub Copilot custom agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/create-custom-agents) that builds working [Radius](https://radapp.io) cloud-native applications.
+Tools for using GitHub Copilot to generate [Radius](https://radapp.io)
+application definitions from source repositories.
 
-## What it does
+This repo contains:
 
-Tell the Radius agent what application you want to build, and it will create:
+- **[`radius-platform-constitution.md`](./radius-platform-constitution.md)** —
+  the authoritative platform spec (resource types, Bicep structure, naming,
+  secrets, networking). Designed to be forked and customized by platform
+  teams adopting Radius.
+- **[`mcp-server/`](./mcp-server)** — the
+  [`@willdavsmith/radius-mcp-server`](https://www.npmjs.com/package/@willdavsmith/radius-mcp-server)
+  npm package. A [Model Context Protocol](https://modelcontextprotocol.io/)
+  server that exposes the constitution and a Bicep validator to AI agents.
 
-- **`app.bicep`** — Radius application definition with the correct resource types and API versions
-- **`bicepconfig.json`** — Bicep extension configuration
-- **`app/Dockerfile`** + starter code — If you need a container image built
-- **`.github/workflows/deploy.yaml`** — GitHub Actions workflow to deploy to a k3d cluster using GHCR
+## How it works
 
-The agent knows how to use `Radius.Compute/containers`, `Radius.Compute/containerImages`, `Radius.Compute/persistentVolumes`, and other Radius resource types from [resource-types-contrib](https://github.com/radius-project/resource-types-contrib).
+The MCP server runs **in-process inside the GitHub Copilot cloud agent
+runner** — there is no service to host. Once a repo admin pastes a small
+JSON snippet into *Settings → Copilot → Cloud agent → MCP configuration*,
+any Copilot task in that repo can call:
 
-## How to use
+| Tool | Purpose |
+|---|---|
+| `get_platform_constitution` | Returns the authoritative platform rules. |
+| `analyze_source_repo` | Inspects the checked-out repo (language, Dockerfiles, datastores, ports). |
+| `validate_app_bicep` | Validates an `app.bicep` against the constitution. |
 
-1. Go to [github.com/copilot/agents](https://github.com/copilot/agents)
-2. Select this repository from the dropdown
-3. Choose the **radius** agent
-4. Describe the application you want to build
+Typical end-to-end flow on github.com:
 
-## Example prompt
+1. Developer files an issue: *"Create a Radius application definition for
+   this repo."*
+2. Assigns Copilot.
+3. Cloud agent runner starts the Radius MCP server, calls the tools,
+   generates `.radius/app.bicep`, validates it, and opens a PR.
 
-> Build me a Node.js web app that listens on port 3000 and deploys to Kubernetes using Radius. Include a GitHub Actions workflow.
+No Radius-specific files in the user's repo (other than the optional
+issue template).
 
-## Repository structure
+## Get started
+
+See [`mcp-server/README.md`](./mcp-server/README.md) for installation and
+configuration instructions.
+
+## Repository layout
 
 ```
-.github/
-├── agents/
-│   └── radius.agent.md          # Copilot agent profile
-└── copilot-setup-steps.yml      # Cloud agent environment setup
+radius-platform-constitution.md   Authoritative platform spec.
+mcp-server/                       npm package source.
+├── src/                          TypeScript source.
+├── examples/                     Drop-in MCP config, custom agent, issue template.
+├── constitution.md               Built copy of the spec, shipped with the package.
+└── README.md                     Package usage docs.
 ```
 
-## Learn more
+## License
 
-- [Radius documentation](https://docs.radapp.io/)
-- [Radius quick start](https://docs.radapp.io/quick-start/)
-- [GitHub Copilot custom agents](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/create-custom-agents)
-- [Radius containerImages demo](https://github.com/willdavsmith/radius-containerimagetype-demo)
+Apache-2.0
